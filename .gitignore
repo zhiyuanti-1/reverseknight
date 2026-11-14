@@ -1,0 +1,56 @@
+# ===== Unity 生成目录（不入库，打开工程时自动重建） =====
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# ===== 本项目的开发工具与临时产物 =====
+# tools/ 里有 Unity 安装包、截图、第三方 MCP 源码和打包日志，体积很大
+/tools/*
+# 但 Unity MCP 编辑器插件是工程依赖（Packages/manifest.json 引用了它），必须一起传
+!/tools/unity-mcp-source/
+/tools/unity-mcp-source/*
+!/tools/unity-mcp-source/MCPForUnity/
+/tmp/
+/tmp_*.py
+*.log
+
+# ===== IDE / 编辑器 =====
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== 打包产物 =====
+*.apk
+*.aab
+*.unitypackage
+*.app
+crashlytics-build.properties
+sysinfo.txt
+
+# ===== 其他 =====
+__pycache__/
+*.pyc

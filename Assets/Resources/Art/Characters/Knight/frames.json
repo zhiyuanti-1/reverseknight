@@ -1,0 +1,7 @@
+{
+  "canvas": [704, 640],
+  "pivot_px_from_top": [352, 382],
+  "pivot_normalized": [0.5, 0.403125],
+  "pixels_per_unit": 300.0,
+  "note": "画布 704x640；脚底基线 y=592（自上而下）= 距底 48px；锚点=碰撞盒中心=基线以上 210px。Unity 的 spritePivot 以左下角为原点，故为 258/640=0.403125。"
+}
