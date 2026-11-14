@@ -11,6 +11,40 @@ public class CameraFollow : MonoBehaviour
     Vector3 velocity;
 
     Camera cam;
+    readonly System.Collections.Generic.List<Vector2> corridors = new System.Collections.Generic.List<Vector2>();
+    int corridor;
+
+    public void SetMap(string text)
+    {
+        corridors.Clear();
+        var map = LevelDefinition.Parse(text);
+        int start = -1;
+        for (int y = 0; y <= map.Height; y++)
+        {
+            int solid = 0;
+            if (y < map.Height)
+                for (int x = 0; x < map.Width; x++)
+                    if (map.At(x, map.Height - 1 - y) == '#') solid++;
+            bool open = y < map.Height && solid < map.Width * 0.72f;
+            if (open && start < 0) start = y;
+            if (open || start < 0) continue;
+            if (y - start >= 3) corridors.Add(new Vector2(start, y));
+            start = -1;
+        }
+        corridor = 0;
+    }
+
+    float ChannelCenter()
+    {
+        if (corridors.Count == 0) return limits.center.y;
+        float y = target.position.y;
+        if (y > corridors[corridor].y + 0.3f && corridor + 1 < corridors.Count) corridor++;
+        if (y < corridors[corridor].x - 0.3f && corridor > 0) corridor--;
+        Vector2 span = corridors[corridor];
+        float halfHeight = (span.y - span.x) * 0.5f + 1.3f;
+        cam.orthographicSize = Mathf.Max(halfHeight, 8f / Mathf.Max(0.3f, cam.aspect));
+        return (span.x + span.y) * 0.5f;
+    }
 
     void Awake()
     {
@@ -26,7 +60,7 @@ public class CameraFollow : MonoBehaviour
     public void SnapToTarget()
     {
         if (target == null) return;
-        Vector3 p = new Vector3(target.position.x, target.position.y, -10f);
+        Vector3 p = new Vector3(target.position.x, ChannelCenter(), -10f);
         transform.position = Clamp(p);
         velocity = Vector3.zero;
     }
@@ -35,10 +69,10 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
 
-        var motor = target.GetComponent<PlayerMotor>();
-        float ahead = motor != null ? motor.Velocity.x * lookAhead : 0f;
+        float center = ChannelCenter();
+        float ahead = cam.orthographicSize * cam.aspect * 0.2f;
 
-        Vector3 desired = new Vector3(target.position.x + ahead, target.position.y + 1.6f, -10f);
+        Vector3 desired = new Vector3(target.position.x + ahead, center, -10f);
         Vector3 p = Vector3.SmoothDamp(transform.position, desired, ref velocity, smoothTime);
         transform.position = Clamp(p);
     }
@@ -49,15 +83,14 @@ public class CameraFollow : MonoBehaviour
 
         float halfH = cam.orthographicSize;
         float halfW = halfH * cam.aspect;
-        float margin = 2.5f;
 
         float minX = limits.min.x + halfW;
         float maxX = limits.max.x - halfW;
         if (minX <= maxX) p.x = Mathf.Clamp(p.x, minX, maxX);
         else p.x = limits.center.x;
 
-        float minY = limits.min.y + halfH - margin;
-        float maxY = limits.max.y - halfH + margin;
+        float minY = limits.min.y + halfH;
+        float maxY = limits.max.y - halfH;
         if (minY <= maxY) p.y = Mathf.Clamp(p.y, minY, maxY);
         else p.y = limits.center.y;
 

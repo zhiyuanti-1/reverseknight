@@ -118,7 +118,7 @@ public class HudGui : MonoBehaviour
                     case 0: title = "01    翻转"; break;
                     case 1: title = "02    断桥"; break;
                     case 2: title = "03    钟楼"; break;
-                    case 3: title = "04    熔潮逃生"; break;
+                    case 3: title = "04    熔炉泄压"; break;
                 }
             }
             var rect = new Rect(left, (248f + i * 74f) * k, width, 60f * k);
@@ -156,6 +156,12 @@ public class HudGui : MonoBehaviour
 
     void DrawChase(GameManager gm, float w, float h, float k)
     {
+        if (gm.Workshop != null)
+        {
+            string core = gm.Workshop.Carrying ? (chinese ? "冷却核心  ◆" : "CORE  FULL") : (chinese ? "冷却核心  ◇" : "CORE  EMPTY");
+            string effect = gm.Lava.SlowRemaining > 0f ? (chinese ? "   喷淋 " : "   SLOW ") + gm.Lava.SlowRemaining.ToString("0.0") + "s" : "";
+            GUI.Label(new Rect(0, 60f * k, w, 36f * k), core + effect, menuLabel);
+        }
         if (gm.RetryCountdown > 0f)
         {
             GUI.Label(new Rect(0, h * 0.34f, w, 58f * k), chinese ? "准备冲刺" : "GET READY", menuTitle);
@@ -172,7 +178,7 @@ public class HudGui : MonoBehaviour
         Fill(new Rect(x, h - 58f * k, width, 38f * k), new Color(0.08f, 0.07f, 0.10f, 0.9f));
         Fill(new Rect(x, h - 22f * k, width * danger, 3f * k), heat);
         GUI.Label(new Rect(x, h - 57f * k, width, 34f * k),
-            (chinese ? "岩浆距离  " : "LAVA GAP  ") + distance.ToString("0.0"), menuLabel);
+            (chinese ? "岩浆距离  " : "LAVA GAP  ") + (Mathf.Floor(distance * 10f) / 10f).ToString("0.0"), menuLabel);
     }
 
     static void Fill(Rect rect, Color color)

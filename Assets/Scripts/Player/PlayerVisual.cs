@@ -86,7 +86,10 @@ public class PlayerVisual : MonoBehaviour
         if (visualRoot != null)
         {
             visualRoot.localRotation = Quaternion.Euler(0f, 0f, roll);
-            visualRoot.localScale = new Vector3(sx * (facing >= 0f ? 1f : -1f), sy, 1f);
+            // Turning upside down also reverses local X. Compensate after the
+            // edge-on midpoint so facing continues to match world movement.
+            float horizontal = (facing >= 0f ? 1f : -1f) * (roll > 90f ? -1f : 1f);
+            visualRoot.localScale = new Vector3(sx * horizontal, sy, 1f);
         }
     }
 

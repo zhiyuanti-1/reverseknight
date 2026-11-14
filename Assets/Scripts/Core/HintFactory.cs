@@ -82,13 +82,13 @@ public static class HintFactory
         tm.characterSize = 0.42f;
         tm.anchor = TextAnchor.MiddleCenter;
         tm.alignment = TextAlignment.Center;
-        tm.color = new Color(0.52f, 0.57f, 0.72f, 0.55f);
+        tm.color = new Color(0.72f, 0.80f, 0.90f, 0.92f);
         tm.richText = false;
         tm.text = text;
 
         var mr = go.GetComponent<MeshRenderer>();
         if (f != null) mr.sharedMaterial = f.material;
-        mr.sortingOrder = -6;
+        mr.sortingOrder = -3;
 
         var ht = go.AddComponent<HintText>();
         ht.lineCount = text.Split('\n').Length;

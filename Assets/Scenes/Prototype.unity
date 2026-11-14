@@ -170,7 +170,7 @@ MonoBehaviour:
   - LEVEL 1   FLIP
   - LEVEL 2   BROKEN BRIDGE
   - LEVEL 3   BELL TOWER
-  - LEVEL 4   MOLTEN ESCAPE
+  - LEVEL 4   COOLANT WORKS
 --- !u!4 &1006459041
 Transform:
   m_ObjectHideFlags: 0

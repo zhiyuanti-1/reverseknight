@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager I;
 
     public string[] levelPaths = { "Levels/level1", "Levels/level2", "Levels/level3", "Levels/level4" };
-    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   MOLTEN ESCAPE" };
+    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   COOLANT WORKS" };
 
     public int LevelIndex { get; private set; }
     public int Deaths { get; private set; }
@@ -18,6 +18,8 @@ public class GameManager : MonoBehaviour
     public bool AtMenu { get; private set; } = true;
     public float RetryCountdown { get; private set; }
     public LavaChase Lava { get; private set; }
+    public CoolantWorkshop Workshop { get; private set; }
+    public bool Respawning => respawning;
     public PlayerMotor PlayerMotor { get; private set; }
     public int LevelCount { get { return levelPaths.Length; } }
 
@@ -116,12 +118,15 @@ public class GameManager : MonoBehaviour
         {
             Lava = levelRoot.AddComponent<LavaChase>();
             Lava.Setup(this, info.Bounds);
+            Workshop = levelRoot.AddComponent<CoolantWorkshop>();
+            Workshop.Setup(this);
         }
 
         if (cam != null)
         {
             cam.target = player.transform;
             cam.SetLimits(info.Bounds);
+            cam.SetMap(asset.text);
             cam.SnapToTarget();
         }
 
@@ -140,6 +145,7 @@ public class GameManager : MonoBehaviour
         PlayerMotor = null;
         Agent = null;
         Lava = null;
+        Workshop = null;
         RetryCountdown = 0f;
         if (cam != null) cam.target = null;
     }
@@ -178,11 +184,13 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.12f);
         if (Lava != null)
         {
+            Workshop.ResetAt(checkpoint.x);
             Lava.ResetAt(checkpoint);
             foreach (var floor in levelRoot.GetComponentsInChildren<FragileFloor>())
                 floor.ResetFloor();
         }
         PlayerMotor.Teleport(checkpoint);
+        if (cam != null) cam.SnapToTarget();
         if (Lava != null && Lava.Started)
         {
             RetryCountdown = 0.75f;
