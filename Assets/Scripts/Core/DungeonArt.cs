@@ -15,6 +15,11 @@ public static class DungeonArt
     public static readonly Sprite Gate = Load("gate_iron");
     public static readonly Sprite Background = Load("dungeon_arches");
 
+    // 传送带：平铺的机身 + 循环滚动的履带面 + 两端滚轮
+    public static readonly Sprite BeltFrame = Load("conveyor_frame");
+    public static readonly Sprite Belt = Load("conveyor_belt");
+    public static readonly Sprite Roller = Load("conveyor_roller");
+
     public static void Tile(SpriteRenderer renderer, Sprite sprite, Vector2 size)
     {
         renderer.sprite = sprite;
@@ -33,6 +38,7 @@ public static class DungeonArt
         }
 
         texture.filterMode = FilterMode.Point;
+        texture.wrapMode = TextureWrapMode.Repeat;   // 传送带面用重复 UV 滚动
         return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
             pivot ?? new Vector2(0.5f, 0.5f), 48f, 0, SpriteMeshType.FullRect);
     }

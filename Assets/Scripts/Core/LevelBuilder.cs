@@ -3,11 +3,11 @@ using UnityEngine;
 
 public static class LevelBuilder
 {
-    const int ORDER_BG = -2;
-    const int ORDER_SOLID = 0;
-    const int ORDER_DECOR = 1;
-    const int ORDER_HAZARD = 2;
-    const int ORDER_GOAL = 3;
+    public const int ORDER_BG = -2;
+    public const int ORDER_SOLID = 0;
+    public const int ORDER_DECOR = 1;
+    public const int ORDER_HAZARD = 2;
+    public const int ORDER_GOAL = 3;
 
     public static LevelInfo Build(string text, string hintText, Transform parent)
     {
@@ -72,7 +72,7 @@ public static class LevelBuilder
             while (col < def.Width)
             {
                 char c = def.At(col, row);
-                if (c == '#' || c == 'F')
+                if (c == '#' || c == 'F' || c == '>' || c == '<')
                 {
                     int start = col;
                     while (col < def.Width && def.At(col, row) == c) col++;
@@ -90,6 +90,10 @@ public static class LevelBuilder
                         bool below = def.At(start, row + 1) == '#' || def.At(start, row + 1) == 'F';
                         if (!above) Block(parent, "EdgeT", cx, y + 1f - 0.035f, len, 0.07f, Palette.SolidEdge, ORDER_DECOR, false);
                         if (!below) Block(parent, "EdgeB", cx, y + 0.035f, len, 0.07f, Palette.SolidEdge, ORDER_DECOR, false);
+                    }
+                    else if (c == '>' || c == '<')
+                    {
+                        MakeConveyor(parent, def, start, row, len, cx, cy, c == '>' ? 1 : -1);
                     }
                     else
                     {
@@ -184,6 +188,27 @@ public static class LevelBuilder
 
                     case 'N':
                         MakePlatform(parent, cx, bottom + 0.2f, new Vector2(0f, 3f));
+                        break;
+
+                    case 'L':
+                        // 长升降台与楼面齐平；玩家站上去才启动，井口在玩家不在平台上时被平台封住
+                        MakePlatform(parent, cx, bottom - 0.2f, new Vector2(0f, 7f), 0f, 2.5f, true);
+                        break;
+
+                    case 'O':
+                        MakePendulum(parent, cx, bottom + 1f, true, col);
+                        break;
+
+                    case 'o':
+                        MakePendulum(parent, cx, bottom, false, col);
+                        break;
+
+                    case 't':
+                        MakeTurret(parent, cx, bottom + 0.8f, 1, col);
+                        break;
+
+                    case 'u':
+                        MakeTurret(parent, cx, bottom + 0.8f, -1, col);
                         break;
                 }
             }
@@ -325,7 +350,7 @@ public static class LevelBuilder
         root.AddComponent<Goal>();
     }
 
-    static void MakePlatform(Transform parent, float cx, float cy, Vector2 travel, float phase = 0f)
+    static void MakePlatform(Transform parent, float cx, float cy, Vector2 travel, float phase = 0f, float speed = 2f, bool playerActivated = false)
     {
         var go = Block(parent, "MovingPlatform", cx, cy, 2.4f, 0.4f, Palette.Platform, ORDER_DECOR, true);
         var renderer = go.GetComponent<SpriteRenderer>();
@@ -333,9 +358,114 @@ public static class LevelBuilder
         renderer.color = Color.white;
         var mp = go.AddComponent<MovingPlatform>();
         mp.travel = travel;
-        mp.speed = 2f;
+        mp.speed = speed;
         mp.waitAtEnds = 0.4f;
         mp.startPhase = phase;
+        mp.playerActivated = playerActivated;
+    }
+
+    static bool IsSolidTile(char c)
+    {
+        return c == '#' || c == 'F' || c == '>' || c == '<';
+    }
+
+    // 传送带：实心块 + 带速，外观由 ConveyorVisual 负责（机身平铺、履带面滚动、两端滚轮）
+    static void MakeConveyor(Transform parent, LevelDefinition def, int start, int row, int len, float cx, float cy, int dir)
+    {
+        var belt = Block(parent, "Conveyor", cx, cy, len, 1f, Color.white, ORDER_SOLID, true);
+        belt.transform.localScale = Vector3.one;
+        belt.GetComponent<BoxCollider2D>().size = new Vector2(len, 1f);
+        DungeonArt.Tile(belt.GetComponent<SpriteRenderer>(), DungeonArt.BeltFrame, new Vector2(len, 1f));
+
+        var conveyor = belt.AddComponent<Conveyor>();
+        conveyor.direction = dir;
+        conveyor.speed = 3f;
+
+        var visual = belt.AddComponent<ConveyorVisual>();
+        visual.Setup(len, dir, BeltFaceSide(def, start, row));
+    }
+
+    static int BeltFaceSide(LevelDefinition def, int start, int row)
+    {
+        bool above = IsSolidTile(def.At(start, row - 1));
+        bool below = IsSolidTile(def.At(start, row + 1));
+        if (!above) return 1;
+        if (!below) return -1;
+        return 1;
+    }
+
+    static void MakePendulum(Transform parent, float cx, float pivotY, bool hangDown, int col)
+    {
+        const float length = 4.0f;
+
+        var root = new GameObject("Pendulum");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(cx, pivotY, 0f);
+
+        var pivot = new GameObject("Pivot");
+        pivot.transform.SetParent(root.transform, false);
+        pivot.transform.localScale = new Vector3(0.5f, 0.5f, 1f);
+        var psr = pivot.AddComponent<SpriteRenderer>();
+        psr.sprite = SpriteFactory.Circle;
+        psr.color = Palette.SolidEdge;
+        psr.sortingOrder = ORDER_DECOR;
+
+        var arm = new GameObject("Arm");
+        arm.transform.SetParent(root.transform, false);
+        arm.transform.localPosition = new Vector3(0f, hangDown ? -length * 0.5f : length * 0.5f, 0f);
+        arm.transform.localScale = new Vector3(0.16f, length, 1f);
+        var asr = arm.AddComponent<SpriteRenderer>();
+        asr.sprite = SpriteFactory.Square;
+        asr.color = Palette.PendulumArm;
+        asr.sortingOrder = ORDER_HAZARD - 1;
+
+        var tip = new GameObject("Blade");
+        tip.transform.SetParent(root.transform, false);
+        tip.transform.localPosition = new Vector3(0f, hangDown ? -length : length, 0f);
+        tip.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
+        var tsr = tip.AddComponent<SpriteRenderer>();
+        tsr.sprite = SpriteFactory.Circle;
+        tsr.color = Palette.Hazard;
+        tsr.sortingOrder = ORDER_HAZARD;
+        var trig = tip.AddComponent<BoxCollider2D>();
+        trig.isTrigger = true;
+        trig.size = Vector2.one * 1.2f;
+        tip.AddComponent<Hazard>();
+
+        var pend = root.AddComponent<Pendulum>();
+        pend.period = 2.6f + (col % 3) * 0.3f;
+        pend.amplitude = 60f;
+        pend.phase = (col % 5) * 1.1f;
+    }
+
+    static void MakeTurret(Transform parent, float cx, float cy, int dir, int col)
+    {
+        var root = new GameObject("Turret");
+        root.transform.SetParent(parent, false);
+        root.transform.position = new Vector3(cx, cy, 0f);
+
+        var baseGo = new GameObject("Base");
+        baseGo.transform.SetParent(root.transform, false);
+        baseGo.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+        var bsr = baseGo.AddComponent<SpriteRenderer>();
+        bsr.sprite = SpriteFactory.Square;
+        bsr.color = Palette.Platform;
+        bsr.sortingOrder = ORDER_DECOR;
+
+        var barrel = new GameObject("Barrel");
+        barrel.transform.SetParent(root.transform, false);
+        barrel.transform.localPosition = new Vector3(dir * 0.36f, 0f, 0f);
+        barrel.transform.localScale = new Vector3(0.7f, 0.2f, 1f);
+        var rsr = barrel.AddComponent<SpriteRenderer>();
+        rsr.sprite = SpriteFactory.Square;
+        rsr.color = Palette.SolidEdge;
+        rsr.sortingOrder = ORDER_HAZARD;
+
+        var turret = root.AddComponent<Turret>();
+        turret.direction = dir;
+        turret.interval = 2.0f + (col % 3) * 0.2f;
+        turret.phase = (col % 5) * 0.2f;
+        turret.speed = 13f;
     }
 
     static void TileBlock(GameObject block, Sprite sprite, float w, float h)

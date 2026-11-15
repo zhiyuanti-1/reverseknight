@@ -9,6 +9,8 @@ public class AutoCapture : MonoBehaviour
     float[] times = { 1.2f, 2.0f, 2.6f, 3.4f, 4.2f, 5.2f, 6.4f, 7.6f };
     int index;
     float t;
+    bool pauseshot;
+    bool pauseDone;
 
     void Start()
     {
@@ -17,7 +19,16 @@ public class AutoCapture : MonoBehaviour
 
         string[] args = System.Environment.GetCommandLineArgs();
         bool overview = false;
-        foreach (var a in args) if (a == "-overview") overview = true;
+        foreach (var a in args)
+        {
+            if (a == "-overview") overview = true;
+            if (a == "-pauseshot") pauseshot = true;
+        }
+        if (pauseshot)
+        {
+            times = new[] { 1.0f };
+            quitAfter = 1.6f;
+        }
 
         // -shotevery 0.05 [-shotfrom 0.6] : 密集抓帧，用来回看动作细节
         for (int i = 0; i < args.Length; i++)
@@ -85,13 +96,20 @@ public class AutoCapture : MonoBehaviour
 
     void Update()
     {
-        t += Time.deltaTime;
+        t += Time.unscaledDeltaTime;
+
+        if (pauseshot && !pauseDone && t >= 0.5f)
+        {
+            pauseDone = true;
+            var gm = GameManager.I;
+            if (gm != null && !gm.AtMenu && !gm.Paused) gm.TogglePause();
+        }
 
         if (index < times.Length && t >= times[index])
         {
             string file = Path.Combine(directory, "shot_" + index.ToString("00") + ".png");
             ScreenCapture.CaptureScreenshot(file);
-            Debug.Log("SHOT " + file);
+            Debug.Log("SHOT " + file + " frame=" + Time.frameCount + " t=" + t.ToString("0.000"));
             index++;
         }
 

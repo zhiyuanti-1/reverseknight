@@ -6,6 +6,8 @@ public class MovingPlatform : MonoBehaviour
     public float speed = 2f;
     public float waitAtEnds = 0.5f;
     [Range(0f, 1f)] public float startPhase = 0f;
+    // 玩家站上去才启动，到顶后等玩家离开才返回；用于封住升降井口。
+    public bool playerActivated;
 
     public Vector2 Step { get; private set; }
 
@@ -13,6 +15,14 @@ public class MovingPlatform : MonoBehaviour
     float t;
     int dir = 1;
     float wait;
+
+    bool PlayerOn()
+    {
+        var gm = GameManager.I;
+        if (gm == null || gm.PlayerMotor == null) return false;
+        var col = GetComponent<Collider2D>();
+        return col != null && gm.PlayerMotor.GroundCollider == col;
+    }
 
     void Start()
     {
@@ -34,6 +44,30 @@ public class MovingPlatform : MonoBehaviour
         {
             Step = Vector2.zero;
             return;
+        }
+
+        bool riding = playerActivated && PlayerOn();
+
+        if (playerActivated)
+        {
+            // 停在井底时只等玩家站上来；玩家不在平台上时平台就是井盖。
+            if (t <= 0f && !riding)
+            {
+                Step = Vector2.zero;
+                return;
+            }
+            // 到顶后玩家还站着就等着，离开后再返回。
+            if (t >= 1f && riding)
+            {
+                Step = Vector2.zero;
+                return;
+            }
+            // 玩家在下降途中踩上来，就直接反向再上去。
+            if (dir < 0 && riding)
+            {
+                dir = 1;
+                wait = 0f;
+            }
         }
 
         if (wait > 0f)

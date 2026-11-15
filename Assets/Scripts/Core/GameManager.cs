@@ -5,8 +5,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager I;
 
-    public string[] levelPaths = { "Levels/level1", "Levels/level2", "Levels/level3", "Levels/level4" };
-    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   COOLANT WORKS" };
+    public string[] levelPaths = { "Levels/level1", "Levels/level2", "Levels/level3", "Levels/level4", "Levels/level5", "Levels/level6", "Levels/level7", "Levels/level8" };
+    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   COOLANT WORKS", "LEVEL 5   ELEVATOR SHAFT", "LEVEL 6   TWIN FRAGILE BRIDGE", "LEVEL 7   PENDULUM HALL", "LEVEL 8   GEARWORKS" };
 
     public int LevelIndex { get; private set; }
     public int Deaths { get; private set; }
@@ -121,6 +121,13 @@ public class GameManager : MonoBehaviour
         {
             var capture = gameObject.AddComponent<AutoCapture>();
             capture.directory = path;
+        }
+
+        string probePath = GetArg(args, "-probe");
+        if (!string.IsNullOrEmpty(probePath))
+        {
+            var probe = gameObject.AddComponent<MotionProbe>();
+            probe.file = probePath;
         }
     }
 
@@ -244,8 +251,13 @@ public class GameManager : MonoBehaviour
         {
             Workshop.ResetAt(checkpoint.x);
             Lava.ResetAt(checkpoint);
+        }
+        if (levelRoot != null)
+        {
             foreach (var floor in levelRoot.GetComponentsInChildren<FragileFloor>())
                 floor.ResetFloor();
+            foreach (var bullet in levelRoot.GetComponentsInChildren<Bullet>())
+                Destroy(bullet.gameObject);
         }
         PlayerMotor.Teleport(checkpoint);
         if (cam != null) cam.SnapToTarget();

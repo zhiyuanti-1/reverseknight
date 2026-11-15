@@ -73,8 +73,7 @@ public class HudGui : MonoBehaviour
 
         if (gm.Paused)
         {
-            GUI.Label(new Rect(0f, h * 0.45f, w, 60f * k), "PAUSED", styleBig);
-            DrawActions(gm, w, h * 0.57f, k, false);
+            DrawPause(gm, w, h, k);
         }
 
         if (gm.Cleared)
@@ -147,8 +146,9 @@ public class HudGui : MonoBehaviour
         GUI.Label(new Rect(0, 118f * k, w, 68f * k), chinese ? "反转骑士" : "REVERSE KNIGHT", menuTitle);
         GUI.Label(new Rect(0, 193f * k, w, 34f * k), chinese ? "选择关卡" : "SELECT A LEVEL", menuLabel);
 
-        float width = Mathf.Min(w - 32f * k, 520f * k);
-        float left = (w - width) * 0.5f;
+        float width = Mathf.Min((w - 56f * k) * 0.5f, 300f * k);
+        float gap = 14f * k;
+        float left = (w - width * 2f - gap) * 0.5f;
         for (int i = 0; i < gm.LevelCount; i++)
         {
             string title = gm.levelNames[i];
@@ -160,12 +160,19 @@ public class HudGui : MonoBehaviour
                     case 1: title = "02    断桥"; break;
                     case 2: title = "03    钟楼"; break;
                     case 3: title = "04    熔炉泄压"; break;
+                    case 4: title = "05    升降井"; break;
+                    case 5: title = "06    双面碎桥"; break;
+                    case 6: title = "07    摆锤大厅"; break;
+                    case 7: title = "08    齿轮带"; break;
                 }
             }
-            var rect = new Rect(left, (248f + i * 74f) * k, width, 60f * k);
+            int column = i / 4;
+            int row = i % 4;
+            var rect = new Rect(left + column * (width + gap), (244f + row * 66f) * k, width, 54f * k);
             Color previous = GUI.backgroundColor;
             if (i == gm.SelectIndex) GUI.backgroundColor = new Color(0.96f, 0.80f, 0.42f);
             else if (i == 3) GUI.backgroundColor = new Color(1f, 0.62f, 0.36f);
+            else if (i == 7) GUI.backgroundColor = new Color(0.86f, 0.75f, 0.95f);
             bool selected = GUI.Button(rect, title, menuButton);
             GUI.backgroundColor = previous;
             if (selected)
@@ -175,9 +182,43 @@ public class HudGui : MonoBehaviour
             }
         }
         GUI.Label(new Rect(0, h - 94f * k, w, 34f * k),
-            chinese ? "点击关卡或按 1–4 直接进入" : "CLICK A LEVEL OR PRESS 1–4", menuLabel);
+            chinese ? "点击关卡或按 1–8 直接进入" : "CLICK A LEVEL OR PRESS 1–8", menuLabel);
         GUI.Label(new Rect(0, h - 54f * k, w, 34f * k),
             chinese ? "↑ ↓ 选择    Enter 进入    Esc 返回主菜单" : "UP / DOWN  SELECT    ENTER  PLAY    ESC  BACK", menuLabel);
+    }
+
+    void DrawPause(GameManager gm, float w, float h, float k)
+    {
+        // 黑色遮罩，把游戏画面压暗
+        Fill(new Rect(0f, 0f, w, h), new Color(0.01f, 0.012f, 0.02f, 0.86f));
+
+        float cardW = Mathf.Min(w - 40f * k, 540f * k);
+        float cardH = 260f * k;
+        var card = new Rect((w - cardW) * 0.5f, (h - cardH) * 0.5f, cardW, cardH);
+
+        // 阴影和黑色弹窗本体
+        Fill(new Rect(card.x + 6f * k, card.y + 6f * k, card.width, card.height),
+            new Color(0f, 0f, 0f, 0.45f));
+        Fill(card, new Color(0.022f, 0.026f, 0.04f, 0.985f));
+
+        // 细金边
+        Color border = new Color(0.95f, 0.82f, 0.45f, 0.55f);
+        Fill(new Rect(card.x, card.y, card.width, 2f * k), border);
+        Fill(new Rect(card.x, card.yMax - 2f * k, card.width, 2f * k), border);
+        Fill(new Rect(card.x, card.y, 2f * k, card.height), border);
+        Fill(new Rect(card.xMax - 2f * k, card.y, 2f * k, card.height), border);
+
+        GUI.Label(new Rect(card.x, card.y + 34f * k, card.width, 58f * k),
+            chinese ? "游戏暂停" : "PAUSED", styleBig);
+        GUI.Label(new Rect(card.x, card.y + 96f * k, card.width, 28f * k),
+            chinese ? "节奏放慢一点" : "TAKE A BREATH", menuLabel);
+
+        Fill(new Rect(card.x + 44f * k, card.y + 138f * k, card.width - 88f * k, 1.5f * k),
+            new Color(0.95f, 0.82f, 0.45f, 0.26f));
+        GUI.Label(new Rect(card.x, card.y + 150f * k, card.width, 26f * k),
+            chinese ? "ESC 继续    R 长按重开" : "ESC  RESUME    HOLD R  RESTART", menuLabel);
+
+        DrawActions(gm, w, card.y + card.height - 72f * k, k, false);
     }
 
     void DrawActions(GameManager gm, float w, float y, float k, bool finished)

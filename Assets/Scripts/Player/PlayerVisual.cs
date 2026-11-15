@@ -10,8 +10,12 @@ public class PlayerVisual : MonoBehaviour
     public bool useSprites;
 
     [Header("跑动")]
-    public float runFrameRate = 14f;
-    public float runSpeedScale = 1.1f;
+    [Tooltip("用 15 帧（6 关键帧 + 6 中间帧 + 3 张 1/4 补帧）跑动；关闭则退回原来的 6 帧")]
+    public bool smoothRunFrames = true;
+    [Tooltip("基础循环速度（次/秒）")]
+    public float runCycleRate = 2.33f;
+    [Tooltip("水平速度每增加 1，循环速度增加多少（次/秒）")]
+    public float runSpeedCycleRate = 0.183f;
 
     [Header("反转")]
     public float flipFrames = 5f;
@@ -29,10 +33,16 @@ public class PlayerVisual : MonoBehaviour
     float runTime;
     float landTimer;
     int lastFlipFrame = -1;
+    float flipVisualTimer;
+    float flipVisualDuration = 0.08f;
 
     SpriteRenderer[] ghosts;
     float[] ghostAge;
     float ghostTimer;
+
+    // 供调试探针读取当前翻面状态
+    public float Roll { get { return roll; } }
+    public bool FlipVisual { get { return flipVisualTimer > 0f; } }
 
     void Start()
     {
@@ -65,6 +75,9 @@ public class PlayerVisual : MonoBehaviour
     {
         ghostTimer = 0f;
         lastFlipFrame = -1;
+        // 翻面表现独立计时：贴地吸附、空中翻转、连续翻转都播完整的 5 帧
+        flipVisualDuration = Mathf.Max(0.01f, motor != null ? motor.flipDuration : 0.08f);
+        flipVisualTimer = flipVisualDuration;
     }
 
     void Update()
@@ -77,20 +90,29 @@ public class PlayerVisual : MonoBehaviour
         UpdateFacing(dt);
         UpdateSquash(dt);
 
-        if (useSprites && body != null)
-        {
-            UpdateSprite(dt);
-            UpdateGhosts(dt);
-        }
+        bool visualFlip = flipVisualTimer > 0f;
+        float flipProgress = visualFlip
+            ? Mathf.Clamp01(1f - flipVisualTimer / flipVisualDuration)
+            : 0f;
 
         if (visualRoot != null)
         {
+            // 物理在固定步里一次跳一格，直接跟 transform 会看到台阶；这里按固定步插值出连续位置
+            visualRoot.localPosition = motor.VisualPosition - transform.position;
             visualRoot.localRotation = Quaternion.Euler(0f, 0f, roll);
             // Turning upside down also reverses local X. Compensate after the
             // edge-on midpoint so facing continues to match world movement.
             float horizontal = (facing >= 0f ? 1f : -1f) * (roll > 90f ? -1f : 1f);
             visualRoot.localScale = new Vector3(sx * horizontal, sy, 1f);
         }
+
+        if (useSprites && body != null)
+        {
+            UpdateSprite(dt, visualFlip, flipProgress);
+            UpdateGhosts(dt);
+        }
+
+        if (visualFlip) flipVisualTimer = Mathf.Max(0f, flipVisualTimer - dt);
     }
 
     float sx = 1f;
@@ -117,11 +139,11 @@ public class PlayerVisual : MonoBehaviour
         sx = 1f + 0.12f * Mathf.Sin(squash * Mathf.PI);
     }
 
-    void UpdateSprite(float dt)
+    void UpdateSprite(float dt, bool visualFlip, float flipProgress)
     {
-        if (motor.InFlip)
+        if (visualFlip)
         {
-            int f = Mathf.Clamp(Mathf.FloorToInt(motor.FlipProgress * flipFrames), 0, KnightSprites.Flip.Length - 1);
+            int f = Mathf.Clamp(Mathf.FloorToInt(flipProgress * flipFrames), 0, KnightSprites.Flip.Length - 1);
             var spr = KnightSprites.Flip[f];
             if (spr != null) body.sprite = spr;
 
@@ -152,11 +174,14 @@ public class PlayerVisual : MonoBehaviour
 
         if (speed > 0.6f)
         {
-            float rate = runFrameRate + speed * runSpeedScale;
-            runTime += dt * rate;
-            int f = Mathf.FloorToInt(runTime) % KnightSprites.RunR.Length;
+            var cycle = smoothRunFrames ? KnightSprites.RunCycle : KnightSprites.RunR;
+            float cyclesPerSecond = runCycleRate + speed * runSpeedCycleRate;
+            runTime += dt * cyclesPerSecond * cycle.Length;
+            int f = Mathf.FloorToInt(runTime) % cycle.Length;
             // 向左跑由 visualRoot 的 X 轴镜像完成，左右帧贴图内容一致
-            if (KnightSprites.RunR[f] != null) body.sprite = KnightSprites.RunR[f];
+            var sprite = cycle[f];
+            if (sprite == null) sprite = KnightSprites.RunR[0];
+            if (sprite != null) body.sprite = sprite;
         }
         else
         {

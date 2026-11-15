@@ -129,6 +129,8 @@ public static class Palette
     public static readonly Color SolidEdge = Hex("81839B");
     public static readonly Color Hazard = Hex("F07351");
     public static readonly Color Platform = Hex("5A6280");
+    public static readonly Color Conveyor = Hex("4E6E8C");
+    public static readonly Color PendulumArm = Hex("8A739C");
     public static readonly Color Fragile = Hex("7A6A4A");
     public static readonly Color Spring = Hex("4E8C6A");
     public static readonly Color Current = new Color(0.45f, 0.72f, 0.92f, 0.16f);

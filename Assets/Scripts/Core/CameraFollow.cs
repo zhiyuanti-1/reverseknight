@@ -24,7 +24,10 @@ public class CameraFollow : MonoBehaviour
             int solid = 0;
             if (y < map.Height)
                 for (int x = 0; x < map.Width; x++)
-                    if (map.At(x, map.Height - 1 - y) == '#') solid++;
+                {
+                    char c = map.At(x, map.Height - 1 - y);
+                    if (c == '#' || c == 'F' || c == '>' || c == '<') solid++;
+                }
             bool open = y < map.Height && solid < map.Width * 0.72f;
             if (open && start < 0) start = y;
             if (open || start < 0) continue;
