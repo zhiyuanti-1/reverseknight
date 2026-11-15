@@ -16,6 +16,62 @@ public class GameManager : MonoBehaviour
     public bool AllClear { get; private set; }
     public bool Paused { get; private set; }
     public bool AtMenu { get; private set; } = true;
+
+    // 菜单有两级：标题主页 -> 选关页
+    public enum MenuPage { Title, LevelSelect }
+
+    public MenuPage Page { get; private set; } = MenuPage.Title;
+    public int TitleIndex { get; private set; }
+    public int SelectIndex { get; private set; }
+    public const int TitleActionCount = 3;
+
+    public void SetPage(MenuPage page)
+    {
+        Page = page;
+        TitleIndex = 0;
+    }
+
+    public void MoveSelect(int delta)
+    {
+        SelectIndex = (SelectIndex + delta + LevelCount) % LevelCount;
+    }
+
+    public void ShowTitle()
+    {
+        UnloadLevel();
+        AtMenu = true;
+        Paused = false;
+        Cleared = false;
+        AllClear = false;
+        Time.timeScale = 1f;
+        SetPage(MenuPage.Title);
+    }
+
+    // 标题页三个按钮：0 开始游戏 1 选择关卡 2 退出游戏
+    public void MoveTitleSelection(int delta)
+    {
+        TitleIndex = (TitleIndex + delta + TitleActionCount) % TitleActionCount;
+    }
+
+    public void ActivateTitle(int index)
+    {
+        TitleIndex = Mathf.Clamp(index, 0, TitleActionCount - 1);
+        switch (TitleIndex)
+        {
+            case 0: LoadLevel(0); break;
+            case 1: SetPage(MenuPage.LevelSelect); break;
+            case 2: QuitGame(); break;
+        }
+    }
+
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
     public float RetryCountdown { get; private set; }
     public LavaChase Lava { get; private set; }
     public CoolantWorkshop Workshop { get; private set; }
@@ -85,6 +141,7 @@ public class GameManager : MonoBehaviour
         UnloadLevel();
         AtMenu = false;
         LevelIndex = Mathf.Clamp(index, 0, levelPaths.Length - 1);
+        SelectIndex = LevelIndex;
         Deaths = 0;
         RunTime = 0f;
         ClearTime = 0f;
@@ -158,6 +215,7 @@ public class GameManager : MonoBehaviour
         Cleared = false;
         AllClear = false;
         Time.timeScale = 1f;
+        SetPage(MenuPage.LevelSelect);
     }
 
     public PlayerAgent Agent { get; private set; }
@@ -241,6 +299,30 @@ public class GameManager : MonoBehaviour
         if (PlayerInput.Source != null) return;
         if (AtMenu)
         {
+            if (Page == MenuPage.Title)
+            {
+                if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) MoveTitleSelection(-1);
+                if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) MoveTitleSelection(1);
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space))
+                    ActivateTitle(TitleIndex);
+                else if (Input.GetKeyDown(KeyCode.Escape))
+                    QuitGame();
+                return;
+            }
+
+            // 选关页：方向键选、Enter 进入、1-4 直接跳关、Esc 回主菜单
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) MoveSelect(-1);
+            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) MoveSelect(1);
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space))
+            {
+                LoadLevel(SelectIndex);
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                SetPage(MenuPage.Title);
+                return;
+            }
             for (int i = 0; i < Mathf.Min(9, LevelCount); i++)
             {
                 if (!Input.GetKeyDown(KeyCode.Alpha1 + i) && !Input.GetKeyDown(KeyCode.Keypad1 + i)) continue;

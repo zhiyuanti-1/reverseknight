@@ -91,23 +91,64 @@ public class HudGui : MonoBehaviour
 
     void DrawMenu(GameManager gm, float w, float h, float k)
     {
-        float width = Mathf.Min(w - 32f * k, 520f * k);
-        float left = (w - width) * 0.5f;
         Fill(new Rect(0, 0, w, h), new Color(0.068f, 0.076f, 0.123f));
         KnightSprites.Ensure();
+        if (gm.Page == GameManager.MenuPage.Title) DrawTitle(gm, w, h, k);
+        else DrawLevelSelect(gm, w, h, k);
+    }
+
+    void DrawKnightIcon(float w, float k, float topY, float iconHeight)
+    {
         Sprite knight = KnightSprites.IdleFront ?? KnightSprites.Idle;
-        if (knight != null)
+        if (knight == null) return;
+        Rect spriteRect = knight.rect;
+        Texture2D texture = knight.texture;
+        float iconWidth = iconHeight * spriteRect.width / spriteRect.height;
+        var uv = new Rect(spriteRect.x / texture.width, spriteRect.y / texture.height,
+            spriteRect.width / texture.width, spriteRect.height / texture.height);
+        GUI.DrawTextureWithTexCoords(new Rect((w - iconWidth) * 0.5f, topY, iconWidth, iconHeight), texture, uv);
+    }
+
+    void DrawTitle(GameManager gm, float w, float h, float k)
+    {
+        DrawKnightIcon(w, k, 78f * k, 138f * k);
+
+        GUI.Label(new Rect(0, 236f * k, w, 82f * k), chinese ? "反转骑士" : "REVERSE KNIGHT", menuTitle);
+        GUI.Label(new Rect(0, 318f * k, w, 34f * k),
+            chinese ? "重力反转 · 横版跑酷" : "A GRAVITY-FLIP PLATFORMER", menuLabel);
+
+        Fill(new Rect(w * 0.5f - 96f * k, 364f * k, 192f * k, 2f * k), new Color(0.95f, 0.82f, 0.45f, 0.45f));
+
+        string[] labels = chinese
+            ? new[] { "开始游戏", "选择关卡", "退出游戏" }
+            : new[] { "START GAME", "LEVEL SELECT", "QUIT" };
+        float width = Mathf.Min(w - 32f * k, 360f * k);
+        float left = (w - width) * 0.5f;
+        for (int i = 0; i < labels.Length; i++)
         {
-            Rect spriteRect = knight.rect;
-            Texture2D texture = knight.texture;
-            float iconHeight = 87f * k;
-            float iconWidth = iconHeight * spriteRect.width / spriteRect.height;
-            var uv = new Rect(spriteRect.x / texture.width, spriteRect.y / texture.height,
-                spriteRect.width / texture.width, spriteRect.height / texture.height);
-            GUI.DrawTextureWithTexCoords(new Rect((w - iconWidth) * 0.5f, 29f * k, iconWidth, iconHeight), texture, uv);
+            var rect = new Rect(left, (398f + i * 70f) * k, width, 56f * k);
+            Color previous = GUI.backgroundColor;
+            if (i == gm.TitleIndex) GUI.backgroundColor = new Color(0.96f, 0.80f, 0.42f);
+            bool hit = GUI.Button(rect, labels[i], menuButton);
+            GUI.backgroundColor = previous;
+            if (hit) gm.ActivateTitle(i);
         }
+
+        GUI.Label(new Rect(0, h - 92f * k, w, 32f * k),
+            chinese ? "↑ ↓ 选择     Enter 确认" : "UP / DOWN  SELECT     ENTER  CONFIRM", menuLabel);
+        GUI.Label(new Rect(0, h - 56f * k, w, 32f * k),
+            chinese ? "Esc 退出游戏" : "ESC  QUIT", menuLabel);
+    }
+
+    void DrawLevelSelect(GameManager gm, float w, float h, float k)
+    {
+        DrawKnightIcon(w, k, 29f * k, 87f * k);
+
         GUI.Label(new Rect(0, 118f * k, w, 68f * k), chinese ? "反转骑士" : "REVERSE KNIGHT", menuTitle);
         GUI.Label(new Rect(0, 193f * k, w, 34f * k), chinese ? "选择关卡" : "SELECT A LEVEL", menuLabel);
+
+        float width = Mathf.Min(w - 32f * k, 520f * k);
+        float left = (w - width) * 0.5f;
         for (int i = 0; i < gm.LevelCount; i++)
         {
             string title = gm.levelNames[i];
@@ -123,7 +164,8 @@ public class HudGui : MonoBehaviour
             }
             var rect = new Rect(left, (248f + i * 74f) * k, width, 60f * k);
             Color previous = GUI.backgroundColor;
-            if (i == 3) GUI.backgroundColor = new Color(1f, 0.62f, 0.36f);
+            if (i == gm.SelectIndex) GUI.backgroundColor = new Color(0.96f, 0.80f, 0.42f);
+            else if (i == 3) GUI.backgroundColor = new Color(1f, 0.62f, 0.36f);
             bool selected = GUI.Button(rect, title, menuButton);
             GUI.backgroundColor = previous;
             if (selected)
@@ -133,9 +175,9 @@ public class HudGui : MonoBehaviour
             }
         }
         GUI.Label(new Rect(0, h - 94f * k, w, 34f * k),
-            chinese ? "点击关卡或按 1–4 进入" : "CLICK A LEVEL OR PRESS 1–4", menuLabel);
+            chinese ? "点击关卡或按 1–4 直接进入" : "CLICK A LEVEL OR PRESS 1–4", menuLabel);
         GUI.Label(new Rect(0, h - 54f * k, w, 34f * k),
-            chinese ? "A / D 移动    空格 翻转    Esc 暂停" : "A / D  MOVE    SPACE  FLIP    ESC  PAUSE", menuLabel);
+            chinese ? "↑ ↓ 选择    Enter 进入    Esc 返回主菜单" : "UP / DOWN  SELECT    ENTER  PLAY    ESC  BACK", menuLabel);
     }
 
     void DrawActions(GameManager gm, float w, float y, float k, bool finished)
