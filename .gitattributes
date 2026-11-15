@@ -1,0 +1,21 @@
+# Unity 场景 / 预制体 / 资源用 Unity SmartMerge（UnityYAMLMerge）合并，
+# 避免两人同时改场景时产生无法解析的 YAML 冲突。
+#
+# 每台开发机需要各自配置驱动（路径指向本机 Unity 安装目录），例如 Windows：
+#   git config merge.unityyamlmerge.driver "'D:/UnityHub/6000.4.6f1/Editor/Data/Tools/UnityYAMLMerge.exe' merge -p \"%O\" \"%A\" \"%B\" \"%A\""
+#
+# 未配置驱动时，git 会退化成普通文本合并（行为与以前一致，不会报错）。
+
+*.unity           merge=unityyamlmerge
+*.prefab          merge=unityyamlmerge
+*.asset           merge=unityyamlmerge
+*.mat             merge=unityyamlmerge
+*.anim            merge=unityyamlmerge
+*.controller      merge=unityyamlmerge
+*.overrideController merge=unityyamlmerge
+*.physicMaterial  merge=unityyamlmerge
+*.physicsMaterial2D merge=unityyamlmerge
+*.renderTexture   merge=unityyamlmerge
+*.mask            merge=unityyamlmerge
+*.preset          merge=unityyamlmerge
+*.signal          merge=unityyamlmerge
