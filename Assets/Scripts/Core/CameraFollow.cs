@@ -41,12 +41,14 @@ public class CameraFollow : MonoBehaviour
     {
         if (corridors.Count == 0) return limits.center.y;
         float y = target.position.y;
-        if (y > corridors[corridor].y + 0.3f && corridor + 1 < corridors.Count) corridor++;
-        if (y < corridors[corridor].x - 0.3f && corridor > 0) corridor--;
+        while (y > corridors[corridor].y + 0.3f && corridor + 1 < corridors.Count) corridor++;
+        while (y < corridors[corridor].x - 0.3f && corridor > 0) corridor--;
         Vector2 span = corridors[corridor];
         float halfHeight = (span.y - span.x) * 0.5f + 1.3f;
         cam.orthographicSize = Mathf.Max(halfHeight, 8f / Mathf.Max(0.3f, cam.aspect));
-        return (span.x + span.y) * 0.5f;
+        // 在井口和楼层切换期间也给角色留出完整的上下视野。
+        float clearance = Mathf.Max(0f, cam.orthographicSize - 1.5f);
+        return Mathf.Clamp((span.x + span.y) * 0.5f, y - clearance, y + clearance);
     }
 
     void Awake()
@@ -64,7 +66,7 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
         Vector3 p = new Vector3(target.position.x, ChannelCenter(), -10f);
-        transform.position = Clamp(p);
+        transform.position = KeepTargetVisible(Clamp(p));
         velocity = Vector3.zero;
     }
 
@@ -77,7 +79,15 @@ public class CameraFollow : MonoBehaviour
 
         Vector3 desired = new Vector3(target.position.x + ahead, center, -10f);
         Vector3 p = Vector3.SmoothDamp(transform.position, desired, ref velocity, smoothTime);
-        transform.position = Clamp(p);
+        transform.position = KeepTargetVisible(Clamp(p));
+    }
+
+    Vector3 KeepTargetVisible(Vector3 p)
+    {
+        // 平滑跟随不能让上升中的角色先跑出画面；地图边缘同样保留此余量。
+        float clearance = Mathf.Max(0f, cam.orthographicSize - 1.5f);
+        p.y = Mathf.Clamp(p.y, target.position.y - clearance, target.position.y + clearance);
+        return p;
     }
 
     Vector3 Clamp(Vector3 p)

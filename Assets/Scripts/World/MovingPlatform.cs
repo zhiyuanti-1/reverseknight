@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class MovingPlatform : MonoBehaviour
 {
     public Vector2 travel = new Vector2(4f, 0f);
@@ -94,5 +95,7 @@ public class MovingPlatform : MonoBehaviour
         Vector2 p = origin + travel * t;
         transform.position = new Vector3(p.x, p.y, 0f);
         Step = (Vector2)transform.position - before;
+        // PlayerMotor 在同一物理步里用盒体扫掠检测平台，必须看到本步的位置。
+        Physics2D.SyncTransforms();
     }
 }
