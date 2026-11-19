@@ -105,6 +105,7 @@ public sealed class CoolantWorkshop : MonoBehaviour
                 core.Taken = true;
                 core.Visual.SetActive(false);
                 Carrying = true;
+                AudioManager.Play("core_pickup", 0.7f, 0.03f);
                 break;
             }
         }
@@ -119,12 +120,14 @@ public sealed class CoolantWorkshop : MonoBehaviour
             {
                 game.Lava.Slow();
                 SprayersUsed++;
+                AudioManager.PlayAt("spray", receiver.Position, 0.85f, 24f);
             }
             else
             {
                 receiver.Forming = 0.25f;
                 receiver.Preview.color = Color.white;
                 BridgesUsed++;
+                AudioManager.PlayAt("bridge_form", receiver.Position, 0.8f, 24f);
             }
             break;
         }

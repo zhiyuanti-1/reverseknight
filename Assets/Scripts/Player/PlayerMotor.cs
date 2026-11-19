@@ -231,6 +231,7 @@ public class PlayerMotor : MonoBehaviour
         // 只清垂直速度；水平速度带过整个吸附过程，落地后不用从 0 重新加速
         Velocity = new Vector2(flipCarryX, 0f);
         if (OnFlip != null) OnFlip();
+        AudioManager.Play(wasGrounded ? "flip_ground" : "flip_air", 0.72f, 0.06f);
 
         Grounded = false;
         groundCollider = null;

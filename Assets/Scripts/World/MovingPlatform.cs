@@ -16,6 +16,7 @@ public class MovingPlatform : MonoBehaviour
     float t;
     int dir = 1;
     float wait;
+    bool wasMoving;
 
     bool PlayerOn()
     {
@@ -95,6 +96,10 @@ public class MovingPlatform : MonoBehaviour
         Vector2 p = origin + travel * t;
         transform.position = new Vector3(p.x, p.y, 0f);
         Step = (Vector2)transform.position - before;
+        bool moving = Step.sqrMagnitude > 0.000001f;
+        if (moving && !wasMoving) AudioManager.PlayAt("elevator_start", transform.position, 0.7f, 20f);
+        else if (!moving && wasMoving) AudioManager.PlayAt("elevator_stop", transform.position, 0.6f, 20f);
+        wasMoving = moving;
         // PlayerMotor 在同一物理步里用盒体扫掠检测平台，必须看到本步的位置。
         Physics2D.SyncTransforms();
     }

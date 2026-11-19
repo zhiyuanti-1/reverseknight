@@ -7,10 +7,20 @@ public class Pendulum : MonoBehaviour
     [Min(0.1f)] public float period = 2.8f;
     [Range(0f, 90f)] public float amplitude = 65f;
     public float phase;
+    float lastSign;
 
     void Update()
     {
         float angle = amplitude * Mathf.Sin((Time.time / Mathf.Max(0.1f, period)) * Mathf.PI * 2f + phase);
         transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+        float sign = Mathf.Sign(angle);
+        if (lastSign != 0f && sign != lastSign)
+        {
+            var gm = GameManager.I;
+            if (gm != null && gm.PlayerMotor != null &&
+                Vector2.Distance(gm.PlayerMotor.transform.position, transform.position) < 9f)
+                AudioManager.PlayAt("pendulum", transform.position, 0.55f, 22f);
+        }
+        lastSign = sign;
     }
 }

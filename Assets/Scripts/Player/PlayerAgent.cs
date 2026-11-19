@@ -19,7 +19,7 @@ public class PlayerAgent : MonoBehaviour
             p.x < limits.min.x - 6f || p.x > limits.max.x + 6f)
         {
             var gm = GameManager.I;
-            if (gm != null) gm.KillPlayer(this);
+            if (gm != null) gm.KillPlayer(this, "fall");
         }
     }
 
@@ -30,7 +30,8 @@ public class PlayerAgent : MonoBehaviour
 
         if (other.GetComponent<Hazard>() != null)
         {
-            gm.KillPlayer(this);
+            string cause = other.GetComponent<PressurePulse>() != null ? "water" : "spike";
+            gm.KillPlayer(this, cause);
             return;
         }
 

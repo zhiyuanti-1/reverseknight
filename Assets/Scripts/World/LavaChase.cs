@@ -16,6 +16,7 @@ public sealed class LavaChase : MonoBehaviour
     float front = 6f;
     bool waiting;
     bool sealedExit;
+    bool startedSfx;
     public bool Started { get; private set; }
     public float SlowRemaining { get; private set; }
     public float Front => front;
@@ -53,12 +54,21 @@ public sealed class LavaChase : MonoBehaviour
         waiting = Started;
         SlowRemaining = 0f;
         front = Started ? checkpoint.x - RetryLead : -5f;
+        if (!Started)
+        {
+            startedSfx = false;
+            AudioManager.StopAmbience();
+        }
         DrawFront();
     }
 
     public void ResumeChase() => waiting = false;
     public void Slow() => SlowRemaining = 4f;
-    public void SealExit() => sealedExit = true;
+    public void SealExit()
+    {
+        sealedExit = true;
+        AudioManager.StopAmbience();
+    }
 
     void FixedUpdate()
     {
@@ -69,11 +79,17 @@ public sealed class LavaChase : MonoBehaviour
             Started = true;
             front = 6f;
         }
+        if (Started && !startedSfx)
+        {
+            startedSfx = true;
+            AudioManager.Play("lava_start", 0.85f);
+            AudioManager.PlayAmbience("lava_loop", 0.5f);
+        }
         float slowTime = Mathf.Min(SlowRemaining, Time.fixedDeltaTime);
         front += slowTime * 2.4f + (Time.fixedDeltaTime - slowTime) * NormalSpeed;
         SlowRemaining = Mathf.Max(0f, SlowRemaining - Time.fixedDeltaTime);
         DrawFront();
-        if (Distance <= 0f) game.KillPlayer(game.Agent);
+        if (Distance <= 0f) game.KillPlayer(game.Agent, "lava");
     }
 
     void LateUpdate()

@@ -9,6 +9,7 @@ public class Spring : MonoBehaviour
     {
         var motor = other.GetComponent<PlayerMotor>();
         if (motor == null) return;
+        AudioManager.PlayAt("spring", transform.position, 0.8f, 16f);
         motor.Launch(direction, strength);
     }
 }

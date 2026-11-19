@@ -46,6 +46,7 @@ public class Checkpoint : MonoBehaviour
         {
             activated = true;
             if (flag != null) flag.color = activeColor;
+            AudioManager.PlayAt("checkpoint", transform.position, 0.85f, 20f);
         }
         gm.SetCheckpoint(respawnPoint);
     }

@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     public void MoveSelect(int delta)
     {
         SelectIndex = (SelectIndex + delta + LevelCount) % LevelCount;
+        if (delta != 0) AudioManager.Play("ui_hover", 0.3f, 0.05f);
     }
 
     public void ShowTitle()
@@ -51,11 +52,13 @@ public class GameManager : MonoBehaviour
     public void MoveTitleSelection(int delta)
     {
         TitleIndex = (TitleIndex + delta + TitleActionCount) % TitleActionCount;
+        if (delta != 0) AudioManager.Play("ui_hover", 0.3f, 0.05f);
     }
 
     public void ActivateTitle(int index)
     {
         TitleIndex = Mathf.Clamp(index, 0, TitleActionCount - 1);
+        AudioManager.Play("ui_confirm", 0.6f, 0.02f);
         switch (TitleIndex)
         {
             case 0: LoadLevel(0); break;
@@ -94,6 +97,8 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         I = this;
+        gameObject.AddComponent<AudioManager>();
+        AudioManager.PlayMusic("bgm_menu", 0.7f);
         Application.targetFrameRate = 60;
         Physics2D.gravity = Vector2.zero;
         Physics2D.queriesHitTriggers = false;
@@ -148,6 +153,14 @@ public class GameManager : MonoBehaviour
         UnloadLevel();
         AtMenu = false;
         LevelIndex = Mathf.Clamp(index, 0, levelPaths.Length - 1);
+        string music = LevelIndex == 2 ? "bgm_bell"
+            : LevelIndex == 3 ? "bgm_forge"
+            : (LevelIndex >= 4 && LevelIndex <= 6) ? "bgm_gears"
+            : LevelIndex == 7 ? "bgm_water" : "bgm_level";
+        AudioManager.PlayMusic(music, 0.5f, 1.0f);
+        if (LevelIndex == 7) AudioManager.PlayAmbience("water_loop", 0.55f, 1.2f);
+        else if (LevelIndex == 1 || LevelIndex == 2) AudioManager.PlayAmbience("air_loop", 0.35f, 1.0f);
+        else AudioManager.StopAmbience(0.6f);
         SelectIndex = LevelIndex;
         Deaths = 0;
         RunTime = 0f;
@@ -218,6 +231,8 @@ public class GameManager : MonoBehaviour
     public void ShowMenu()
     {
         UnloadLevel();
+        AudioManager.StopAmbience(0.6f);
+        AudioManager.PlayMusic("bgm_menu", 0.7f, 0.9f);
         AtMenu = true;
         Paused = false;
         Cleared = false;
@@ -233,10 +248,15 @@ public class GameManager : MonoBehaviour
         checkpoint = point;
     }
 
-    public void KillPlayer(PlayerAgent agent)
+    public void KillPlayer(PlayerAgent agent, string cause = "spike")
     {
         if (Cleared || AllClear || respawning || Paused) return;
         if (PlayerMotor == null || agent == null || agent != Agent) return;
+
+        string sfx = cause == "lava" ? "death_lava"
+            : cause == "water" ? "death_water"
+            : cause == "fall" ? "death_fall" : "death_spike";
+        AudioManager.Play(sfx, 0.85f, 0.05f);
 
         respawning = true;
         Deaths++;
@@ -275,6 +295,7 @@ public class GameManager : MonoBehaviour
             Lava.ResumeChase();
         }
         PlayerMotor.GetComponent<PlayerInput>().ClearBuffers();
+        AudioManager.Play("respawn", 0.7f, 0.03f);
         PlayerMotor.Frozen = false;
         respawning = false;
     }
@@ -294,7 +315,15 @@ public class GameManager : MonoBehaviour
         }
         if (LevelIndex >= levelPaths.Length - 1) AllClear = true;
 
+        AudioManager.Play("goal", 0.85f);
+        StartCoroutine(ClearAudio(AllClear));
         Debug.Log("LEVEL CLEAR index=" + LevelIndex + " deaths=" + Deaths + " time=" + ClearTime.ToString("0.00"));
+    }
+
+    System.Collections.IEnumerator ClearAudio(bool all)
+    {
+        yield return new WaitForSeconds(0.7f);
+        AudioManager.Play(all ? "all_clear" : "level_clear", 0.9f);
     }
 
     public void TogglePause()
@@ -302,6 +331,7 @@ public class GameManager : MonoBehaviour
         if (AtMenu || Cleared) return;
         Paused = !Paused;
         Time.timeScale = Paused ? 0f : 1f;
+        AudioManager.Play(Paused ? "pause_open" : "pause_close", 0.7f);
         if (PlayerMotor != null)
         {
             PlayerMotor.Frozen = Paused || respawning;

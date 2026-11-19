@@ -21,6 +21,8 @@ public class PressureNozzle : MonoBehaviour
     LineRenderer sight;
     readonly List<RaycastHit2D> hits = new List<RaycastHit2D>();
     static Material ringMaterial;
+    AudioSource chargeSrc;
+    bool wasLocked;
 
     public void SetZone(float min, float max)
     {
@@ -50,6 +52,8 @@ public class PressureNozzle : MonoBehaviour
     {
         if (!Charging && !cooling) return;
         timer = 0; cooling = false; Charging = false; aimLocked = false;
+        wasLocked = false;
+        if (chargeSrc != null && chargeSrc.isPlaying) AudioManager.FadeOut(chargeSrc, 0.25f);
         ring.positionCount = 0;
         sight.positionCount = 0;
         foreach (var pulse in GetComponentsInChildren<PressurePulse>())
@@ -98,6 +102,24 @@ public class PressureNozzle : MonoBehaviour
             float a = Mathf.PI * 0.5f - i / 39f * Mathf.PI * 2f;
             ring.SetPosition(i, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * 0.58f);
         }
+
+        if (Charging)
+        {
+            if (chargeSrc == null)
+            {
+                chargeSrc = AudioManager.Loop("nozzle_charge", transform, 0.45f);
+            }
+            else if (!chargeSrc.isPlaying && chargeSrc.clip != null)
+            {
+                chargeSrc.volume = 0f;
+                chargeSrc.Play();
+                AudioManager.FadeIn(chargeSrc, 0.45f, 0.3f);
+            }
+        }
+        if (!Charging && chargeSrc != null && chargeSrc.isPlaying) AudioManager.FadeOut(chargeSrc, 0.25f);
+        if (aimLocked && !wasLocked)
+            AudioManager.PlayAt("nozzle_lock", transform.position, 0.85f, 24f);
+        wasLocked = aimLocked;
     }
 
     float FindPathLength(PlayerMotor player)
@@ -119,6 +141,9 @@ public class PressureNozzle : MonoBehaviour
     void Fire()
     {
         if (pathLength <= PulseHalfLength) return;
+        AudioManager.PlayAt("nozzle_fire", transform.position, 0.9f, 28f);
+        if (chargeSrc != null && chargeSrc.isPlaying) AudioManager.FadeOut(chargeSrc, 0.2f);
+        wasLocked = false;
         var go = new GameObject("High pressure pulse"); go.transform.SetParent(transform, false);
         go.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg);
         var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = SpriteFactory.Rounded;
@@ -140,11 +165,24 @@ public class PressurePulse : MonoBehaviour
 {
     Vector2 direction;
     float remaining;
+    bool flyPlayed;
 
     public void Setup(Vector2 aim, float distance)
     {
         direction = aim;
         remaining = distance;
+    }
+
+    void Update()
+    {
+        if (flyPlayed) return;
+        var gm = GameManager.I;
+        if (gm == null || gm.PlayerMotor == null) return;
+        if (Vector2.Distance(transform.position, gm.PlayerMotor.transform.position) < 7f)
+        {
+            flyPlayed = true;
+            AudioManager.PlayAt("pulse_fly", transform.position, 0.5f, 14f);
+        }
     }
 
     void FixedUpdate()
