@@ -156,9 +156,9 @@ public class GameManager : MonoBehaviour
         string music = LevelIndex == 2 ? "bgm_bell"
             : LevelIndex == 3 ? "bgm_forge"
             : (LevelIndex >= 4 && LevelIndex <= 6) ? "bgm_gears"
-            : LevelIndex == 7 ? "bgm_water" : "bgm_level";
+            : "bgm_level";
         AudioManager.PlayMusic(music, 0.5f, 1.0f);
-        if (LevelIndex == 7) AudioManager.PlayAmbience("water_loop", 0.55f, 1.2f);
+        if (LevelIndex == 7) AudioManager.PlayAmbience("water_loop", 0.26f, 1.2f);
         else if (LevelIndex == 1 || LevelIndex == 2) AudioManager.PlayAmbience("air_loop", 0.35f, 1.0f);
         else AudioManager.StopAmbience(0.6f);
         SelectIndex = LevelIndex;
