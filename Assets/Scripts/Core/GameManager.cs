@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager I;
 
     public string[] levelPaths = { "Levels/level1", "Levels/level2", "Levels/level3", "Levels/level4", "Levels/level5", "Levels/level6", "Levels/level7", "Levels/level8" };
-    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   COOLANT WORKS", "LEVEL 5   ELEVATOR SHAFT", "LEVEL 6   TWIN FRAGILE BRIDGE", "LEVEL 7   PENDULUM HALL", "LEVEL 8   GEARWORKS" };
+    public string[] levelNames = { "LEVEL 1   FLIP", "LEVEL 2   BROKEN BRIDGE", "LEVEL 3   BELL TOWER", "LEVEL 4   COOLANT WORKS", "LEVEL 5   ELEVATOR SHAFT", "LEVEL 6   TWIN FRAGILE BRIDGE", "LEVEL 7   PENDULUM HALL", "LEVEL 8   COUNTERFLOW" };
 
     public int LevelIndex { get; private set; }
     public int Deaths { get; private set; }
@@ -169,7 +169,8 @@ public class GameManager : MonoBehaviour
 
         levelRoot = new GameObject("Level_" + (LevelIndex + 1));
         var hintAsset = Resources.Load<TextAsset>(levelPaths[LevelIndex] + "_hints");
-        LevelInfo info = LevelBuilder.Build(asset.text, hintAsset != null ? hintAsset.text : "", levelRoot.transform);
+        LevelInfo info = LevelBuilder.Build(asset.text, hintAsset != null ? hintAsset.text : "", levelRoot.transform,
+            levelPaths[LevelIndex] == "Levels/level8");
         levelBounds = info.Bounds;
 
         GameObject player = PlayerFactory.Create(info.Spawn, levelRoot.transform);
@@ -258,6 +259,8 @@ public class GameManager : MonoBehaviour
                 floor.ResetFloor();
             foreach (var bullet in levelRoot.GetComponentsInChildren<Bullet>())
                 Destroy(bullet.gameObject);
+            foreach (var nozzle in levelRoot.GetComponentsInChildren<PressureNozzle>())
+                nozzle.ResetCycle();
         }
         PlayerMotor.Teleport(checkpoint);
         if (cam != null) cam.SnapToTarget();

@@ -178,7 +178,7 @@ MonoBehaviour:
   - LEVEL 5   ELEVATOR SHAFT
   - LEVEL 6   TWIN FRAGILE BRIDGE
   - LEVEL 7   PENDULUM HALL
-  - LEVEL 8   GEARWORKS
+  - LEVEL 8   COUNTERFLOW
 --- !u!4 &1006459041
 Transform:
   m_ObjectHideFlags: 0

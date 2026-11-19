@@ -33,6 +33,7 @@ public class HudGui : MonoBehaviour
 
         Font font = FontLibrary.Main;
         chinese = font != null;
+        if (chinese) styleBold.font = font;
         menuLabel = new GUIStyle(styleBold) { font = font, alignment = TextAnchor.MiddleCenter };
         menuTitle = new GUIStyle(styleBig) { font = font, fontSize = Mathf.RoundToInt(49f * k) };
         menuButton = new GUIStyle(GUI.skin.button)
@@ -60,7 +61,8 @@ public class HudGui : MonoBehaviour
             return;
         }
 
-        GUI.Label(new Rect(24f * k, 16f * k, w * 0.6f, 40f * k), gm.CurrentLevelName, styleBold);
+        GUI.Label(new Rect(24f * k, 16f * k, w * 0.6f, 40f * k),
+            chinese && gm.LevelIndex == 7 ? "第八关 · 逆流回廊" : gm.CurrentLevelName, styleBold);
 
         string stats = "DEATHS  " + gm.Deaths.ToString("00") + "        TIME  " + Format(gm.Cleared ? gm.ClearTime : gm.RunTime);
         GUI.Label(new Rect(w - 380f * k, 16f * k, 360f * k, 40f * k), stats, styleBold);
@@ -163,7 +165,7 @@ public class HudGui : MonoBehaviour
                     case 4: title = "05    升降井"; break;
                     case 5: title = "06    双面碎桥"; break;
                     case 6: title = "07    摆锤大厅"; break;
-                    case 7: title = "08    齿轮带"; break;
+                    case 7: title = "08    逆流回廊"; break;
                 }
             }
             int column = i / 4;

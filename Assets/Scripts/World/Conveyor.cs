@@ -6,6 +6,7 @@ public class Conveyor : MonoBehaviour
 {
     public int direction = 1;
     public float speed = 3f;
+    public float speedLimitBonus;
 
     public float BeltSpeed { get { return direction * speed; } }
 }

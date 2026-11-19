@@ -22,6 +22,8 @@ public class Goal : MonoBehaviour
 
 public class Checkpoint : MonoBehaviour
 {
+    public Color inactiveColor = Palette.CheckpointOff;
+    public Color activeColor = Palette.CheckpointOn;
     public int index;
     public Vector2 respawnPoint;
     public bool activated;
@@ -33,7 +35,7 @@ public class Checkpoint : MonoBehaviour
         index = i;
         respawnPoint = point;
         flag = flagRenderer;
-        if (flag != null) flag.color = Palette.CheckpointOff;
+        if (flag != null) flag.color = inactiveColor;
     }
 
     public void Activate()
@@ -43,7 +45,7 @@ public class Checkpoint : MonoBehaviour
         if (!activated)
         {
             activated = true;
-            if (flag != null) flag.color = Palette.CheckpointOn;
+            if (flag != null) flag.color = activeColor;
         }
         gm.SetCheckpoint(respawnPoint);
     }

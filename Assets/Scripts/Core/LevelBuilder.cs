@@ -9,7 +9,7 @@ public static class LevelBuilder
     public const int ORDER_HAZARD = 2;
     public const int ORDER_GOAL = 3;
 
-    public static LevelInfo Build(string text, string hintText, Transform parent)
+    public static LevelInfo Build(string text, string hintText, Transform parent, bool waterTheme = false)
     {
         LevelDefinition def = LevelDefinition.Parse(text);
 
@@ -20,8 +20,8 @@ public static class LevelBuilder
         info.Spawn = new Vector2(1.5f, 2f);
 
         BuildBackdrop(def, parent);
-        BuildGroundRuns(def, parent);
-        BuildProps(def, parent, info);
+        BuildGroundRuns(def, parent, waterTheme);
+        BuildProps(def, parent, info, waterTheme);
         BuildCurrents(def, parent);
         BuildHints(hintText, parent);
 
@@ -64,7 +64,7 @@ public static class LevelBuilder
         return def.Height - 1 - row;
     }
 
-    static void BuildGroundRuns(LevelDefinition def, Transform parent)
+    static void BuildGroundRuns(LevelDefinition def, Transform parent, bool waterTheme)
     {
         for (int row = 0; row < def.Height; row++)
         {
@@ -93,7 +93,7 @@ public static class LevelBuilder
                     }
                     else if (c == '>' || c == '<')
                     {
-                        MakeConveyor(parent, def, start, row, len, cx, cy, c == '>' ? 1 : -1);
+                        MakeConveyor(parent, def, start, row, len, cx, cy, c == '>' ? 1 : -1, waterTheme);
                     }
                     else
                     {
@@ -127,7 +127,7 @@ public static class LevelBuilder
         }
     }
 
-    static void BuildProps(LevelDefinition def, Transform parent, LevelInfo info)
+    static void BuildProps(LevelDefinition def, Transform parent, LevelInfo info, bool waterTheme)
     {
         int checkpointIndex = 0;
 
@@ -166,7 +166,7 @@ public static class LevelBuilder
                         break;
 
                     case 'C':
-                        MakeCheckpoint(parent, def, col, row, cx, bottom, checkpointIndex);
+                        MakeCheckpoint(parent, def, col, row, cx, bottom, checkpointIndex, waterTheme);
                         checkpointIndex++;
                         break;
 
@@ -204,7 +204,12 @@ public static class LevelBuilder
                         break;
 
                     case 't':
-                        MakeTurret(parent, cx, bottom + 0.8f, 1, col);
+                        if (waterTheme)
+                            MakePressureNozzle(parent, cx, bottom + 0.8f, 5.5f, 15.5f);
+                        else MakeTurret(parent, cx, bottom + 0.8f, 1, col);
+                        break;
+                    case 'q':
+                        if (waterTheme) MakePressureNozzle(parent, cx, bottom + 0.2f, 9f, 11f);
                         break;
 
                     case 'u':
@@ -316,7 +321,7 @@ public static class LevelBuilder
         s.strength = 18f;
     }
 
-    static void MakeCheckpoint(Transform parent, LevelDefinition def, int col, int row, float cx, float bottom, int index)
+    static void MakeCheckpoint(Transform parent, LevelDefinition def, int col, int row, float cx, float bottom, int index, bool waterTheme)
     {
         var root = new GameObject("Checkpoint");
         root.transform.SetParent(parent, false);
@@ -331,6 +336,11 @@ public static class LevelBuilder
         trig.offset = new Vector2(0f, 1.2f);
 
         var cp = root.AddComponent<Checkpoint>();
+        if (waterTheme)
+        {
+            cp.inactiveColor = Palette.Hex("B89B66");
+            cp.activeColor = Palette.Hex("FFD583");
+        }
         cp.Setup(index, new Vector2(cx, bottom + 0.75f), flag);
     }
 
@@ -370,7 +380,7 @@ public static class LevelBuilder
     }
 
     // 传送带：实心块 + 带速，外观由 ConveyorVisual 负责（机身平铺、履带面滚动、两端滚轮）
-    static void MakeConveyor(Transform parent, LevelDefinition def, int start, int row, int len, float cx, float cy, int dir)
+    static void MakeConveyor(Transform parent, LevelDefinition def, int start, int row, int len, float cx, float cy, int dir, bool waterTheme)
     {
         var belt = Block(parent, "Conveyor", cx, cy, len, 1f, Color.white, ORDER_SOLID, true);
         belt.transform.localScale = Vector3.one;
@@ -379,10 +389,19 @@ public static class LevelBuilder
 
         var conveyor = belt.AddComponent<Conveyor>();
         conveyor.direction = dir;
-        conveyor.speed = 3f;
 
-        var visual = belt.AddComponent<ConveyorVisual>();
-        visual.Setup(len, dir, BeltFaceSide(def, start, row));
+        if (waterTheme)
+        {
+            conveyor.speed = 4f;
+            conveyor.speedLimitBonus = 2f;
+            belt.name = "Water channel";
+            belt.AddComponent<WaterChannelVisual>().Setup(len, dir, BeltFaceSide(def, start, row));
+        }
+        else
+        {
+            var visual = belt.AddComponent<ConveyorVisual>();
+            visual.Setup(len, dir, BeltFaceSide(def, start, row));
+        }
     }
 
     static int BeltFaceSide(LevelDefinition def, int start, int row)
@@ -436,6 +455,14 @@ public static class LevelBuilder
         pend.period = 2.6f + (col % 3) * 0.3f;
         pend.amplitude = 60f;
         pend.phase = (col % 5) * 1.1f;
+    }
+
+    static void MakePressureNozzle(Transform parent, float x, float y, float leftReach, float rightReach)
+    {
+        var nozzle = new GameObject("Sluice pressure nozzle");
+        nozzle.transform.SetParent(parent, false);
+        nozzle.transform.position = new Vector3(x, y, 0);
+        nozzle.AddComponent<PressureNozzle>().SetZone(x - leftReach, x + rightReach);
     }
 
     static void MakeTurret(Transform parent, float cx, float cy, int dir, int col)

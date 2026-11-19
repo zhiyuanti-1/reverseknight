@@ -1,0 +1,9 @@
+Generation mode: built-in image_gen. Both requested assets are saved in Assets/Resources/Art/Water.
+
+water_flow.png:
+Game-ready raster texture asset for Reverse Knight pixel art dark dungeon. Single horizontally seamless turquoise flowing water strip filling entire wide 3:1 canvas edge to edge, straight flat top bright white cyan foam boundary and straight dark teal bottom. Strict orthographic side view, low resolution pixel art crisp chunky pixels, limited navy cyan white palette matching the provided concept. Small horizontal broken streaks and ripples, no waves sticking outside rectangle, no arrows no text no stones no gears no frame no background margin. This is the entire texture, NOT a scene or concept board. Left and right boundaries must seamlessly repeat. Water mostly dark teal with sparse bright white foam near top. Opaque.
+
+sluice_nozzle.png:
+Single game sprite isolated on fully transparent background, centered round embedded stone sluice nozzle for 2D side-view pixel-art dark medieval dungeon. Flat front-facing circular slate blue-gray stone outer ring with a small warm brass inner ring and dark hollow center. Symmetric simple circular silhouette, crisp chunky low-res pixel art, no perspective, no stand no pipe no water no background no text no shadow outside object. The whole object takes 85 percent of square canvas. Muted dark stone with restrained amber edge, suitable to render at 48 pixels. Match reference water dungeon art style.
+
+The runtime crops the small opaque border by UV, mirrors the water vertically for ceiling channels, and supplies independent world-direction arrows and a dynamic pressure ring through Unity geometry. PNG source files are preserved without destructive editing.

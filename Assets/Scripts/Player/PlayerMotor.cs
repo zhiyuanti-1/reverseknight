@@ -127,13 +127,18 @@ public class PlayerMotor : MonoBehaviour
         }
 
         float belt = 0f;
+        float speedLimit = maxSpeed;
         if (Grounded && groundCollider != null)
         {
             var conveyor = groundCollider.GetComponent<Conveyor>();
-            if (conveyor != null) belt = conveyor.BeltSpeed;
+            if (conveyor != null)
+            {
+                belt = conveyor.BeltSpeed;
+                speedLimit += conveyor.speedLimitBonus;
+            }
         }
 
-        float target = Mathf.Clamp(move * maxSpeed + belt, -maxSpeed, maxSpeed);
+        float target = Mathf.Clamp(move * maxSpeed + belt, -speedLimit, speedLimit);
         float accel = Grounded
             ? (Mathf.Abs(target) > 0.01f ? groundAccel : groundDecel)
             : airAccel;
